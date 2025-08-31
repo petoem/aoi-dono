@@ -9,7 +9,9 @@ go install github.com/petoem/aoi-dono
 ```
 
 ## Contributing
+
 If you wish to contribute to the code or documentation, feel free to fork the repository and submit a pull request.
 
 ## License
+
 This project is under MIT License. See the [LICENSE](LICENSE) file for the full license text.
