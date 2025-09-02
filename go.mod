@@ -10,10 +10,12 @@ require (
 )
 
 require (
+	github.com/adrg/xdg v0.5.3
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/carlmjohnson/versioninfo v0.22.5 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
+	github.com/go-ini/ini v1.67.0
 	github.com/go-logr/logr v1.4.1 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
@@ -64,7 +66,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.26.0 // indirect
 	golang.org/x/crypto v0.21.0 // indirect
-	golang.org/x/sys v0.22.0 // indirect
+	golang.org/x/sys v0.26.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
