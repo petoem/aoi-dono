@@ -7,12 +7,12 @@ import (
 	"github.com/mattn/go-mastodon"
 )
 
-func mastodonPost(ctx context.Context, mastodonInstanceUrl, mastodonAccessToken, mastodonClientKey, mastodonClientSecret, language, postContent string) (string, error) {
+func mastodonPost(ctx context.Context, credentials Mastodon, language, postContent string) (string, error) {
 	config := &mastodon.Config{
-		Server:       mastodonInstanceUrl,
-		ClientID:     mastodonClientKey,
-		ClientSecret: mastodonClientSecret,
-		AccessToken:  mastodonAccessToken,
+		Server:       credentials.Server,
+		ClientID:     credentials.ClientID,
+		ClientSecret: credentials.ClientSecret,
+		AccessToken:  credentials.AccessToken,
 	}
 	client := mastodon.NewClient(config)
 

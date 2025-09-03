@@ -11,8 +11,8 @@ import (
 	"github.com/bluesky-social/indigo/lex/util"
 )
 
-func blueskyPost(ctx context.Context, blueskyServiceUrl, blueskyIdentifier, blueskyPassword, language, postContent string) (string, error) {
-	c, err := client.LoginWithPasswordHost(ctx, blueskyServiceUrl, blueskyIdentifier, blueskyPassword, "", nil)
+func blueskyPost(ctx context.Context, credentials Bluesky, language, postContent string) (string, error) {
+	c, err := client.LoginWithPasswordHost(ctx, credentials.ServiceUrl, credentials.Identifier, credentials.Password, "", nil)
 	if err != nil {
 		return "", err
 	}

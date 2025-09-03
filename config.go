@@ -2,7 +2,9 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
+	"os"
 
 	"github.com/adrg/xdg"
 	"github.com/go-ini/ini"
@@ -61,4 +63,38 @@ func (c *config) SaveConfig() error {
 		return fmt.Errorf("could not save config file: %w", err)
 	}
 	return nil
+}
+
+// parseFlagsAndEnv sets the flags and env values on the config.
+//
+// 1. Commandline flags, 2. environment variables and 3. config file.
+func (c *config) parseFlagsAndEnv() bool {
+	// Credentials
+	// - Mastodon
+	flag.StringVar(&c.Mastodon.Server, "mastodonInstanceUrl", osEnvOrConfigValue("MASTODON_INSTANCE_URL", c.Mastodon.Server), "Mastodon instance URL (e.g., https://mastodon.example)")
+	flag.StringVar(&c.Mastodon.AccessToken, "mastodonAccessToken", osEnvOrConfigValue("MASTODON_ACCESS_TOKEN", c.Mastodon.AccessToken), "Mastodon access token")
+	flag.StringVar(&c.Mastodon.ClientID, "mastodonClientKey", osEnvOrConfigValue("MASTODON_CLIENT_KEY", c.Mastodon.ClientID), "Mastodon client key")
+	flag.StringVar(&c.Mastodon.ClientSecret, "mastodonClientSecret", osEnvOrConfigValue("MASTODON_CLIENT_SECRET", c.Mastodon.ClientSecret), "Mastodon client secret")
+	// - Bluesky
+	flag.StringVar(&c.Bluesky.ServiceUrl, "blueskyServiceUrl", osEnvOrConfigValue("BLUESKY_SERVICE_URL", c.Bluesky.ServiceUrl), "Bluesky service URL (e.g., https://bsky.social)")
+	flag.StringVar(&c.Bluesky.Identifier, "blueskyIdentifier", osEnvOrConfigValue("BLUESKY_IDENTIFIER", c.Bluesky.Identifier), "Bluesky identifier (e.g., @user.bsky.social)")
+	flag.StringVar(&c.Bluesky.Password, "blueskyPassword", osEnvOrConfigValue("BLUESKY_PASSWORD", c.Bluesky.Password), "Bluesky password")
+
+	// Other flags
+	df := "en"
+	if c.DefaultLanguage != "" {
+		df = c.DefaultLanguage
+	}
+	flag.StringVar(&c.DefaultLanguage, "lang", df, "Post language (e.g., jp)")
+
+	shouldSave := flag.Bool("saveToConfig", false, "Save current config to file")
+	flag.Parse()
+	return *shouldSave
+}
+
+func osEnvOrConfigValue(env, defaultValue string) string {
+	if value, ok := os.LookupEnv(env); ok {
+		return value
+	}
+	return defaultValue
 }
