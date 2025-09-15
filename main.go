@@ -27,6 +27,7 @@ func main() {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
+		os.Exit(0)
 	}
 
 	editor := getEditor()
@@ -43,27 +44,31 @@ func main() {
 	}
 	postContent := readPost(post)
 
-	// TODO: detect if post is longer than Bluesky 300 characters
-	// limit and split it into a thread
-	url, err := blueskyPost(ctx,
-		cfg.Bluesky,
-		cfg.DefaultLanguage,
-		postContent,
-	)
-	if err != nil {
-		fmt.Printf("\x1b[1;31m✗\x1b[0m %s: %s\n", "Bluesky", err)
-	} else {
-		fmt.Printf("\x1b[1;32m✓\x1b[0m %s: %s\n", "Bluesky", url)
+	if !cfg.Bluesky.IsEmpty() {
+		// TODO: detect if post is longer than Bluesky 300 characters
+		// limit and split it into a thread
+		url, err := blueskyPost(ctx,
+			cfg.Bluesky,
+			cfg.DefaultLanguage,
+			postContent,
+		)
+		if err != nil {
+			fmt.Printf("\x1b[1;31m✗\x1b[0m %s: %s\n", "Bluesky", err)
+		} else {
+			fmt.Printf("\x1b[1;32m✓\x1b[0m %s: %s\n", "Bluesky", url)
+		}
 	}
 
-	url, err = mastodonPost(ctx,
-		cfg.Mastodon,
-		cfg.DefaultLanguage,
-		postContent,
-	)
-	if err != nil {
-		fmt.Printf("\x1b[1;31m✗\x1b[0m %s: %s\n", "Mastodon", err)
-	} else {
-		fmt.Printf("\x1b[1;32m✓\x1b[0m %s: %s\n", "Mastodon", url)
+	if !cfg.Mastodon.IsEmpty() {
+		url, err := mastodonPost(ctx,
+			cfg.Mastodon,
+			cfg.DefaultLanguage,
+			postContent,
+		)
+		if err != nil {
+			fmt.Printf("\x1b[1;31m✗\x1b[0m %s: %s\n", "Mastodon", err)
+		} else {
+			fmt.Printf("\x1b[1;32m✓\x1b[0m %s: %s\n", "Mastodon", url)
+		}
 	}
 }

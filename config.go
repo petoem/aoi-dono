@@ -62,6 +62,7 @@ func (c *config) SaveConfig() error {
 	if err != nil {
 		return fmt.Errorf("could not save config file: %w", err)
 	}
+	fmt.Printf("config file saved to: %s\n", file)
 	return nil
 }
 
@@ -90,6 +91,14 @@ func (c *config) parseFlagsAndEnv() bool {
 	shouldSave := flag.Bool("saveToConfig", false, "Save current config to file")
 	flag.Parse()
 	return *shouldSave
+}
+
+func (m Mastodon) IsEmpty() bool {
+	return m == Mastodon{}
+}
+
+func (b Bluesky) IsEmpty() bool {
+	return b == Bluesky{}
 }
 
 func osEnvOrConfigValue(env, defaultValue string) string {
