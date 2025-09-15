@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/bluesky-social/indigo/api/atproto"
@@ -31,7 +32,7 @@ func blueskyPost(ctx context.Context, credentials Bluesky, language, postContent
 
 	facetsLink := findRichtextFacetLinks(postContent)
 	facetsTag := findRichtextFacetTags(postContent)
-	facetsMention := findRichtextFacetMention(postContent)
+	facetsMention := findRichtextFacetMention(ctx, c, postContent)
 
 	record := bsky.FeedPost{
 		CreatedAt: string(syntax.DatetimeNow()),
@@ -110,17 +111,24 @@ func findRichtextFacetTags(text string) []*bsky.RichtextFacet {
 	return facets
 }
 
-func findRichtextFacetMention(text string) []*bsky.RichtextFacet {
+func findRichtextFacetMention(ctx context.Context, client util.LexClient, text string) []*bsky.RichtextFacet {
 	facets := make([]*bsky.RichtextFacet, 0)
 	locs := mentionsRegex.FindAllStringIndex(text, -1)
 	for _, loc := range locs {
 		user := text[loc[0]:loc[1]]
+		if t := strings.TrimLeftFunc(user, unicode.IsSpace); len(t) != len(user) { // match has a leading space
+			loc[0] += len(user) - len(t)
+			user = t
+		}
+		res, err := atproto.IdentityResolveHandle(ctx, client, strings.TrimPrefix(user, "@"))
+		if err != nil {
+			continue // ignore handles we can't resolve
+		}
 		facets = append(facets, &bsky.RichtextFacet{
 			Features: []*bsky.RichtextFacet_Features_Elem{
 				{
 					RichtextFacet_Mention: &bsky.RichtextFacet_Mention{
-						// TODO: resolve handle to did
-						Did: strings.TrimPrefix(strings.TrimSpace(user), "@"),
+						Did: res.Did,
 					},
 				},
 			},
