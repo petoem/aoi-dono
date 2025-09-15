@@ -51,10 +51,12 @@ func blueskyPost(ctx context.Context, credentials Bluesky, language, postContent
 	if err != nil {
 		return "", fmt.Errorf("create record failed: %w", err)
 	}
-	// TODO: transform into URL
-	// at://<DID>/<COLLECTION>/<RKEY>
-	// https://bsky.app/profile/<DID>/post/<RKEY>
-	return response.Uri, nil
+
+	uri, err := syntax.ParseATURI(response.Uri)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("https://bsky.app/profile/%s/post/%s", uri.Authority(), uri.RecordKey()), nil
 }
 
 func findRichtextFacetLinks(text string) []*bsky.RichtextFacet {
