@@ -1,10 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"os"
+	"strings"
 
 	"github.com/adrg/xdg"
 	"github.com/go-ini/ini"
@@ -70,6 +73,7 @@ func (c *config) SaveConfig() error {
 //
 // 1. Commandline flags, 2. environment variables and 3. config file.
 func (c *config) parseFlagsAndEnv() bool {
+	flag.CommandLine.SetOutput(redactedWriter(os.Stderr, c.Mastodon.AccessToken, c.Mastodon.ClientSecret, c.Bluesky.Password))
 	// Credentials
 	// - Mastodon
 	flag.StringVar(&c.Mastodon.Server, "mastodonInstanceUrl", osEnvOrConfigValue("MASTODON_INSTANCE_URL", c.Mastodon.Server), "Mastodon instance URL (e.g., https://mastodon.example)")
@@ -106,4 +110,23 @@ func osEnvOrConfigValue(env, defaultValue string) string {
 		return value
 	}
 	return defaultValue
+}
+
+func redactedWriter(writer io.Writer, redact ...string) io.Writer {
+	r, w := io.Pipe()
+	go func() {
+		s := bufio.NewScanner(r)
+		for s.Scan() {
+			for _, r := range redact {
+				if r == "" {
+					continue
+				}
+				fmt.Fprintln(writer, strings.ReplaceAll(s.Text(), r, "******"))
+			}
+		}
+		if err := s.Err(); err != nil {
+			fmt.Fprintln(writer, "redactedWriter:", err)
+		}
+	}()
+	return w
 }
