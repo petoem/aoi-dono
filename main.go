@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
+	"runtime/debug"
 	"syscall"
 )
 
@@ -18,10 +21,19 @@ func main() {
 		os.Exit(1)
 	}
 
-	shouldSave := cfg.parseFlagsAndEnv()
+	// commandline flags
+	shouldSave := cfg.flagsAndEnv(flag.CommandLine)
+	printversion := flag.Bool("version", false, "Show version information")
+	flag.Parse()
+
+	// print version information
+	if *printversion {
+		fmt.Printf("%s %s\n", filepath.Base(os.Args[0]), version())
+		os.Exit(0)
+	}
 
 	// save config to file
-	if shouldSave {
+	if *shouldSave {
 		err := cfg.SaveConfig()
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
@@ -71,4 +83,12 @@ func main() {
 			fmt.Printf("\x1b[1;32m✓\x1b[0m %s: %s\n", "Mastodon", url)
 		}
 	}
+}
+
+func version() string {
+	if info, ok := debug.ReadBuildInfo(); ok {
+		return info.Main.Version
+	}
+
+	return "unknown"
 }

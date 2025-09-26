@@ -1,13 +1,12 @@
 package main
 
 import (
-	"bufio"
+	"bytes"
 	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"os"
-	"strings"
 
 	"github.com/adrg/xdg"
 	"github.com/go-ini/ini"
@@ -69,32 +68,32 @@ func (c *config) SaveConfig() error {
 	return nil
 }
 
-// parseFlagsAndEnv sets the flags and env values on the config.
+// flagsAndEnv sets the flags and env values on the config.
 //
 // 1. Commandline flags, 2. environment variables and 3. config file.
-func (c *config) parseFlagsAndEnv() bool {
-	flag.CommandLine.SetOutput(redactedWriter(os.Stderr, c.Mastodon.AccessToken, c.Mastodon.ClientSecret, c.Bluesky.Password))
-	// Credentials
+func (c *config) flagsAndEnv(flags *flag.FlagSet) *bool {
+	// redact credentials from usage text
+	flags.SetOutput(newRedactedWriter(os.Stderr, c.Mastodon.AccessToken, c.Mastodon.ClientSecret, c.Bluesky.Password))
+	// credentials
 	// - Mastodon
-	flag.StringVar(&c.Mastodon.Server, "mastodon-instance-url", osEnvOrConfigValue("MASTODON_INSTANCE_URL", c.Mastodon.Server), "Mastodon instance URL (e.g., https://mastodon.example)")
-	flag.StringVar(&c.Mastodon.AccessToken, "mastodon-access-token", osEnvOrConfigValue("MASTODON_ACCESS_TOKEN", c.Mastodon.AccessToken), "Mastodon access token")
-	flag.StringVar(&c.Mastodon.ClientID, "mastodon-client-key", osEnvOrConfigValue("MASTODON_CLIENT_KEY", c.Mastodon.ClientID), "Mastodon client key")
-	flag.StringVar(&c.Mastodon.ClientSecret, "mastodon-client-secret", osEnvOrConfigValue("MASTODON_CLIENT_SECRET", c.Mastodon.ClientSecret), "Mastodon client secret")
+	flags.StringVar(&c.Mastodon.Server, "mastodon-instance-url", osEnvOrConfigValue("MASTODON_INSTANCE_URL", c.Mastodon.Server), "Mastodon instance URL (e.g., https://mastodon.example)")
+	flags.StringVar(&c.Mastodon.AccessToken, "mastodon-access-token", osEnvOrConfigValue("MASTODON_ACCESS_TOKEN", c.Mastodon.AccessToken), "Mastodon access token")
+	flags.StringVar(&c.Mastodon.ClientID, "mastodon-client-key", osEnvOrConfigValue("MASTODON_CLIENT_KEY", c.Mastodon.ClientID), "Mastodon client key")
+	flags.StringVar(&c.Mastodon.ClientSecret, "mastodon-client-secret", osEnvOrConfigValue("MASTODON_CLIENT_SECRET", c.Mastodon.ClientSecret), "Mastodon client secret")
 	// - Bluesky
-	flag.StringVar(&c.Bluesky.ServiceUrl, "bluesky-service-url", osEnvOrConfigValue("BLUESKY_SERVICE_URL", c.Bluesky.ServiceUrl), "Bluesky service URL (e.g., https://bsky.social)")
-	flag.StringVar(&c.Bluesky.Identifier, "bluesky-identifier", osEnvOrConfigValue("BLUESKY_IDENTIFIER", c.Bluesky.Identifier), "Bluesky identifier (e.g., @user.bsky.social)")
-	flag.StringVar(&c.Bluesky.Password, "bluesky-password", osEnvOrConfigValue("BLUESKY_PASSWORD", c.Bluesky.Password), "Bluesky password")
+	flags.StringVar(&c.Bluesky.ServiceUrl, "bluesky-service-url", osEnvOrConfigValue("BLUESKY_SERVICE_URL", c.Bluesky.ServiceUrl), "Bluesky service URL (e.g., https://bsky.social)")
+	flags.StringVar(&c.Bluesky.Identifier, "bluesky-identifier", osEnvOrConfigValue("BLUESKY_IDENTIFIER", c.Bluesky.Identifier), "Bluesky identifier (e.g., @user.bsky.social)")
+	flags.StringVar(&c.Bluesky.Password, "bluesky-password", osEnvOrConfigValue("BLUESKY_PASSWORD", c.Bluesky.Password), "Bluesky password")
 
-	// Other flags
+	// other flags
 	df := "en"
 	if c.DefaultLanguage != "" {
 		df = c.DefaultLanguage
 	}
-	flag.StringVar(&c.DefaultLanguage, "lang", df, "Post language (e.g., jp)")
+	flags.StringVar(&c.DefaultLanguage, "lang", df, "Post language (e.g., jp)")
 
-	shouldSave := flag.Bool("save-to-config", false, "Save current config to file")
-	flag.Parse()
-	return *shouldSave
+	shouldSave := flags.Bool("save-to-config", false, "Save current config to file")
+	return shouldSave
 }
 
 func (m Mastodon) IsEmpty() bool {
@@ -112,21 +111,23 @@ func osEnvOrConfigValue(env, defaultValue string) string {
 	return defaultValue
 }
 
-func redactedWriter(writer io.Writer, redact ...string) io.Writer {
-	r, w := io.Pipe()
-	go func() {
-		s := bufio.NewScanner(r)
-		for s.Scan() {
-			for _, r := range redact {
-				if r == "" {
-					continue
-				}
-				fmt.Fprintln(writer, strings.ReplaceAll(s.Text(), r, "******"))
-			}
+type redactedWriter struct {
+	io.Writer
+	redact []string
+}
+
+func newRedactedWriter(writer io.Writer, redact ...string) *redactedWriter {
+	return &redactedWriter{Writer: writer, redact: redact}
+}
+
+func (r redactedWriter) Write(p []byte) (int, error) {
+	tmp := make([]byte, len(p))
+	copy(tmp, p)
+	for _, r := range r.redact {
+		if r == "" {
+			continue
 		}
-		if err := s.Err(); err != nil {
-			fmt.Fprintln(writer, "redactedWriter:", err)
-		}
-	}()
-	return w
+		tmp = bytes.ReplaceAll(tmp, []byte(r), bytes.Repeat([]byte{byte('*')}, len(r)))
+	}
+	return r.Writer.Write(tmp)
 }
