@@ -76,14 +76,14 @@ func (c *config) parseFlagsAndEnv() bool {
 	flag.CommandLine.SetOutput(redactedWriter(os.Stderr, c.Mastodon.AccessToken, c.Mastodon.ClientSecret, c.Bluesky.Password))
 	// Credentials
 	// - Mastodon
-	flag.StringVar(&c.Mastodon.Server, "mastodonInstanceUrl", osEnvOrConfigValue("MASTODON_INSTANCE_URL", c.Mastodon.Server), "Mastodon instance URL (e.g., https://mastodon.example)")
-	flag.StringVar(&c.Mastodon.AccessToken, "mastodonAccessToken", osEnvOrConfigValue("MASTODON_ACCESS_TOKEN", c.Mastodon.AccessToken), "Mastodon access token")
-	flag.StringVar(&c.Mastodon.ClientID, "mastodonClientKey", osEnvOrConfigValue("MASTODON_CLIENT_KEY", c.Mastodon.ClientID), "Mastodon client key")
-	flag.StringVar(&c.Mastodon.ClientSecret, "mastodonClientSecret", osEnvOrConfigValue("MASTODON_CLIENT_SECRET", c.Mastodon.ClientSecret), "Mastodon client secret")
+	flag.StringVar(&c.Mastodon.Server, "mastodon-instance-url", osEnvOrConfigValue("MASTODON_INSTANCE_URL", c.Mastodon.Server), "Mastodon instance URL (e.g., https://mastodon.example)")
+	flag.StringVar(&c.Mastodon.AccessToken, "mastodon-access-token", osEnvOrConfigValue("MASTODON_ACCESS_TOKEN", c.Mastodon.AccessToken), "Mastodon access token")
+	flag.StringVar(&c.Mastodon.ClientID, "mastodon-client-key", osEnvOrConfigValue("MASTODON_CLIENT_KEY", c.Mastodon.ClientID), "Mastodon client key")
+	flag.StringVar(&c.Mastodon.ClientSecret, "mastodon-client-secret", osEnvOrConfigValue("MASTODON_CLIENT_SECRET", c.Mastodon.ClientSecret), "Mastodon client secret")
 	// - Bluesky
-	flag.StringVar(&c.Bluesky.ServiceUrl, "blueskyServiceUrl", osEnvOrConfigValue("BLUESKY_SERVICE_URL", c.Bluesky.ServiceUrl), "Bluesky service URL (e.g., https://bsky.social)")
-	flag.StringVar(&c.Bluesky.Identifier, "blueskyIdentifier", osEnvOrConfigValue("BLUESKY_IDENTIFIER", c.Bluesky.Identifier), "Bluesky identifier (e.g., @user.bsky.social)")
-	flag.StringVar(&c.Bluesky.Password, "blueskyPassword", osEnvOrConfigValue("BLUESKY_PASSWORD", c.Bluesky.Password), "Bluesky password")
+	flag.StringVar(&c.Bluesky.ServiceUrl, "bluesky-service-url", osEnvOrConfigValue("BLUESKY_SERVICE_URL", c.Bluesky.ServiceUrl), "Bluesky service URL (e.g., https://bsky.social)")
+	flag.StringVar(&c.Bluesky.Identifier, "bluesky-identifier", osEnvOrConfigValue("BLUESKY_IDENTIFIER", c.Bluesky.Identifier), "Bluesky identifier (e.g., @user.bsky.social)")
+	flag.StringVar(&c.Bluesky.Password, "bluesky-password", osEnvOrConfigValue("BLUESKY_PASSWORD", c.Bluesky.Password), "Bluesky password")
 
 	// Other flags
 	df := "en"
@@ -92,7 +92,7 @@ func (c *config) parseFlagsAndEnv() bool {
 	}
 	flag.StringVar(&c.DefaultLanguage, "lang", df, "Post language (e.g., jp)")
 
-	shouldSave := flag.Bool("saveToConfig", false, "Save current config to file")
+	shouldSave := flag.Bool("save-to-config", false, "Save current config to file")
 	flag.Parse()
 	return *shouldSave
 }
