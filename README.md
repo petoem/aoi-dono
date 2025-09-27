@@ -1,6 +1,8 @@
 # Aoi-dono
 
-Post from your favourite text `$EDITOR` to Bluesky and Mastodon. Simply run `aoi-dono` in your shell, write your post, save it and you are done!
+Post from your favourite text `$EDITOR` to Bluesky and Mastodon. Simply run `aoi-dono` in your shell, write your post, save it, close and you are done! 
+
+Just like `git commit` ✨
 
 ## How to get `Aoi`?
 
