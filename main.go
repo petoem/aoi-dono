@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime/debug"
+	"strings"
 	"syscall"
 )
 
@@ -54,7 +55,12 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+
 	postContent := readPost(post)
+	if strings.TrimSpace(postContent) == "" {
+		fmt.Printf("Nothing to post, exiting.")
+		return
+	}
 
 	if !cfg.Bluesky.IsEmpty() {
 		// TODO: detect if post is longer than Bluesky 300 characters
