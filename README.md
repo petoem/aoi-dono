@@ -8,6 +8,8 @@ Post from your favourite text `$EDITOR` to Bluesky and Mastodon. Simply run `aoi
 go install github.com/petoem/aoi-dono@latest
 ```
 
+Alternatively, you can download a binary release [here](https://github.com/petoem/aoi-dono/releases).
+
 ## How to setup and use `Aoi`?
 
 ### Configure your favourite text editor ...
