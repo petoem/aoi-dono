@@ -63,8 +63,6 @@ func main() {
 	}
 
 	if !cfg.Bluesky.IsEmpty() {
-		// TODO: detect if post is longer than Bluesky 300 characters
-		// limit and split it into a thread
 		url, err := blueskyPost(ctx,
 			cfg.Bluesky,
 			cfg.DefaultLanguage,

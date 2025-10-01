@@ -12,7 +12,7 @@ import (
 	"github.com/go-ini/ini"
 )
 
-const defaultConfigFileName = "aoi-dono/aoi-dono.ini"
+var defaultConfigFileName = "aoi-dono/aoi-dono.ini"
 
 type config struct {
 	DefaultLanguage string
