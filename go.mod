@@ -2,7 +2,10 @@ module github.com/petoem/aoi-dono
 
 go 1.25.0
 
-require github.com/bluesky-social/indigo v0.0.0-20250830233406-214d5c43bbb8
+require (
+	github.com/bluesky-social/indigo v0.0.0-20250830233406-214d5c43bbb8
+	github.com/rivo/uniseg v0.4.7
+)
 
 require (
 	github.com/gorilla/websocket v1.5.3 // indirect

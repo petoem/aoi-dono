@@ -58,7 +58,7 @@ func main() {
 
 	postContent := readPost(post)
 	if strings.TrimSpace(postContent) == "" {
-		fmt.Printf("Nothing to post, exiting.")
+		fmt.Println("Nothing to post, exiting.")
 		return
 	}
 

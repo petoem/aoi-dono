@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"regexp"
@@ -15,7 +16,6 @@ import (
 	"github.com/bluesky-social/indigo/atproto/client"
 	"github.com/bluesky-social/indigo/atproto/syntax"
 	"github.com/bluesky-social/indigo/lex/util"
-	"mvdan.cc/xurls/v2"
 )
 
 // Regex for finding mentions from: https://github.com/bluesky-social/atproto/blob/d91988fe79030b61b556dd6f16a46f0c3b9d0b44/packages/api/src/rich-text/util.ts
@@ -30,29 +30,57 @@ func blueskyPost(ctx context.Context, credentials Bluesky, language, postContent
 		return "", err
 	}
 
-	facetsLink := findRichtextFacetLinks(postContent)
-	facetsTag := findRichtextFacetTags(postContent)
-	facetsMention := findRichtextFacetMention(ctx, c, postContent)
-
-	record := bsky.FeedPost{
-		CreatedAt: string(syntax.DatetimeNow()),
-		Langs:     []string{language},
-		Facets:    slices.Concat(facetsLink, facetsTag, facetsMention),
-		Text:      postContent,
-	}
-
-	request := &atproto.RepoCreateRecord_Input{
-		Collection: "app.bsky.feed.post",
-		Repo:       c.AccountDID.String(),
-		Record:     &util.LexiconTypeDecoder{Val: &record},
-	}
-
-	response, err := atproto.RepoCreateRecord(ctx, c, request)
+	thread, err := splitPostIntoThread(postContent, 300, "...")
 	if err != nil {
-		return "", fmt.Errorf("create record failed: %w", err)
+		return "", err
 	}
 
-	uri, err := syntax.ParseATURI(response.Uri)
+	records := make([]*bsky.FeedPost, 0, len(thread))
+	for _, p := range thread {
+		facetsLink := findRichtextFacetLinks(p)
+		facetsTag := findRichtextFacetTags(p)
+		facetsMention := findRichtextFacetMention(ctx, c, p)
+
+		records = append(records, &bsky.FeedPost{
+			CreatedAt: string(syntax.DatetimeNow()),
+			Langs:     []string{language},
+			Facets:    slices.Concat(facetsLink, facetsTag, facetsMention),
+			Text:      p,
+		})
+	}
+
+	responses := make([]*atproto.RepoCreateRecord_Output, 0, len(thread))
+	for i, record := range records {
+		if i > 0 {
+			record.Reply = &bsky.FeedPost_ReplyRef{
+				Root: &atproto.RepoStrongRef{
+					Cid: responses[0].Cid,
+					Uri: responses[0].Uri,
+				},
+				Parent: &atproto.RepoStrongRef{
+					Cid: responses[i-1].Cid,
+					Uri: responses[i-1].Uri,
+				},
+			}
+		}
+		request := &atproto.RepoCreateRecord_Input{
+			Collection: "app.bsky.feed.post",
+			Repo:       c.AccountDID.String(),
+			Record:     &util.LexiconTypeDecoder{Val: record},
+		}
+
+		res, err := atproto.RepoCreateRecord(ctx, c, request)
+		if err != nil {
+			return "", fmt.Errorf("create record failed: %w", err)
+		}
+		responses = append(responses, res)
+	}
+
+	if len(responses) == 0 {
+		return "", errors.New("no record was created")
+	}
+
+	uri, err := syntax.ParseATURI(responses[0].Uri) // root post uri
 	if err != nil {
 		return "", err
 	}
@@ -61,8 +89,7 @@ func blueskyPost(ctx context.Context, credentials Bluesky, language, postContent
 
 func findRichtextFacetLinks(text string) []*bsky.RichtextFacet {
 	facets := make([]*bsky.RichtextFacet, 0)
-	ru := xurls.Relaxed()
-	locs := ru.FindAllStringIndex(text, -1)
+	locs := findAllLinksInPost(text)
 	for _, loc := range locs {
 		uri, err := url.Parse(text[loc[0]:loc[1]])
 		if err != nil {
