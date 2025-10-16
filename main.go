@@ -43,21 +43,20 @@ func main() {
 		os.Exit(0)
 	}
 
-	editor := getEditor()
 	post, err := NewPost(cfg.DefaultLanguage)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 	defer post.Delete()
+	editor := getEditor()
 	err = openEditor(editor, post.Filepath())
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
-	postContent := post.Content()
-	if strings.TrimSpace(postContent) == "" {
+	if strings.TrimSpace(post.Content()) == "" {
 		fmt.Println("Nothing to post, exiting.")
 		return
 	}

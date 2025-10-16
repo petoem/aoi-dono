@@ -29,7 +29,7 @@ func getEditor() string {
 }
 
 func openEditor(editor string, post string) error {
-	fmt.Fprintln(os.Stderr, "hint: Waiting for your editor to close the file...")
+	fmt.Fprintln(os.Stderr, "hint: Waiting for your editor to close ...")
 	args := strings.Split(editor, " ")
 	args = append(args, post)
 	cmd := exec.Command(args[0], args[1:]...)
