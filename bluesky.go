@@ -24,13 +24,13 @@ var mentionsRegex = regexp.MustCompile(`(^|\s|\()(@)([a-zA-Z0-9.-]+)(\b)`)
 // Regex for hastags
 var hastagRegex = regexp.MustCompile(`#\w+`)
 
-func blueskyPost(ctx context.Context, credentials Bluesky, language, postContent string) (string, error) {
+func blueskyPost(ctx context.Context, credentials Bluesky, post *Post) (string, error) {
 	c, err := client.LoginWithPasswordHost(ctx, credentials.ServiceUrl, credentials.Identifier, credentials.Password, "", nil)
 	if err != nil {
 		return "", err
 	}
 
-	thread, err := splitPostIntoThread(postContent, 300, "...")
+	thread, err := splitPostIntoThread(post.Content(), 300, "...")
 	if err != nil {
 		return "", err
 	}
@@ -43,7 +43,7 @@ func blueskyPost(ctx context.Context, credentials Bluesky, language, postContent
 
 		records = append(records, &bsky.FeedPost{
 			CreatedAt: string(syntax.DatetimeNow()),
-			Langs:     []string{language},
+			Langs:     []string{post.Language()},
 			Facets:    slices.Concat(facetsLink, facetsTag, facetsMention),
 			Text:      p,
 		})

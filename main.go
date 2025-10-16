@@ -44,19 +44,19 @@ func main() {
 	}
 
 	editor := getEditor()
-	post, err := createPost()
+	post, err := NewPost(cfg.DefaultLanguage)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	defer os.Remove(post)
-	err = openEditor(editor, post)
+	defer post.Delete()
+	err = openEditor(editor, post.Filepath())
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
-	postContent := readPost(post)
+	postContent := post.Content()
 	if strings.TrimSpace(postContent) == "" {
 		fmt.Println("Nothing to post, exiting.")
 		return
@@ -65,8 +65,7 @@ func main() {
 	if !cfg.Bluesky.IsEmpty() {
 		url, err := blueskyPost(ctx,
 			cfg.Bluesky,
-			cfg.DefaultLanguage,
-			postContent,
+			post,
 		)
 		if err != nil {
 			fmt.Printf("\x1b[1;31m✗\x1b[0m %s: %s\n", "Bluesky", err)
@@ -78,8 +77,7 @@ func main() {
 	if !cfg.Mastodon.IsEmpty() {
 		url, err := mastodonPost(ctx,
 			cfg.Mastodon,
-			cfg.DefaultLanguage,
-			postContent,
+			post,
 		)
 		if err != nil {
 			fmt.Printf("\x1b[1;31m✗\x1b[0m %s: %s\n", "Mastodon", err)

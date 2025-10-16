@@ -10,7 +10,7 @@ import (
 
 const defaultMastodonStatusCharacterLimit = 500
 
-func mastodonPost(ctx context.Context, credentials Mastodon, language, postContent string) (string, error) {
+func mastodonPost(ctx context.Context, credentials Mastodon, post *Post) (string, error) {
 	config := &mastodon.Config{
 		Server:       credentials.Server,
 		ClientID:     credentials.ClientID,
@@ -28,7 +28,7 @@ func mastodonPost(ctx context.Context, credentials Mastodon, language, postConte
 		characterlimit = defaultMastodonStatusCharacterLimit
 	}
 
-	thread, err := splitPostIntoThread(postContent, int(characterlimit), "...")
+	thread, err := splitPostIntoThread(post.Content(), int(characterlimit), "...")
 	if err != nil {
 		return "", err
 	}
@@ -38,7 +38,7 @@ func mastodonPost(ctx context.Context, credentials Mastodon, language, postConte
 		toots = append(toots, &mastodon.Toot{
 			Status:     p,
 			Visibility: "public",
-			Language:   language,
+			Language:   post.Language(),
 		})
 	}
 

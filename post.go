@@ -10,21 +10,42 @@ import (
 	"mvdan.cc/xurls/v2"
 )
 
-func createPost() (string, error) {
-	post, err := os.CreateTemp("", "post.*.txt")
-	if err != nil {
-		return "", fmt.Errorf("could not create post file: %w", err)
-	}
-	defer post.Close()
-	return post.Name(), nil
+type Post struct {
+	filepath string
+	language string
+	// TODO: add attachment like image or video
 }
 
-func readPost(post string) string {
-	content, err := os.ReadFile(post)
+func NewPost(language string) (*Post, error) {
+	post, err := os.CreateTemp("", "post.*.txt")
+	if err != nil {
+		return nil, fmt.Errorf("could not create post file: %w", err)
+	}
+	defer post.Close()
+	return &Post{
+		filepath: post.Name(),
+		language: language,
+	}, nil
+}
+
+func (p Post) Content() string {
+	content, err := os.ReadFile(p.filepath)
 	if err != nil {
 		return ""
 	}
 	return string(content)
+}
+
+func (p Post) Filepath() string {
+	return p.filepath
+}
+
+func (p Post) Language() string {
+	return p.language
+}
+
+func (p Post) Delete() {
+	os.Remove(p.filepath)
 }
 
 func splitPostIntoThread(post string, limit int, endmarker string) ([]string, error) {
