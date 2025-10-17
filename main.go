@@ -43,14 +43,14 @@ func main() {
 		os.Exit(0)
 	}
 
-	post, err := NewPost(cfg.DefaultLanguage)
+	post, err := NewPostFile(cfg.DefaultLanguage)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	defer post.Delete()
+	defer os.Remove(post.DataPath())
 	editor := getEditor()
-	err = openEditor(editor, post.Filepath())
+	err = openEditor(editor, post.DataPath())
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

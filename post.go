@@ -3,49 +3,87 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"slices"
+	"strings"
 
 	"github.com/rivo/uniseg"
 	"mvdan.cc/xurls/v2"
 )
 
 type Post struct {
-	filepath string
+	data     io.ReadSeeker
 	language string
 	// TODO: add attachment like image or video
 }
 
-func NewPost(language string) (*Post, error) {
+func NewPostFile(language string) (*Post, error) {
 	post, err := os.CreateTemp("", "post.*.txt")
 	if err != nil {
 		return nil, fmt.Errorf("could not create post file: %w", err)
 	}
 	defer post.Close()
 	return &Post{
-		filepath: post.Name(),
+		data:     post,
 		language: language,
 	}, nil
 }
 
-func (p Post) Content() string {
-	content, err := os.ReadFile(p.filepath)
+func NewPostString(language, content string) (*Post, error) {
+	reader := strings.NewReader(content)
+	return &Post{
+		data:     reader,
+		language: language,
+	}, nil
+}
+
+func (p *Post) Content() string {
+	// This is needed because some editors
+	// replace the original file instead of writing to it.
+	// By default os.File are closed and reopened for reading.
+	if file, ok := p.data.(*os.File); ok {
+		f, err := os.Open(file.Name())
+		if err != nil {
+			panic(err)
+		}
+		p.data = f
+		defer f.Close()
+	}
+
+	_, err := p.data.Seek(0, io.SeekStart)
 	if err != nil {
-		return ""
+		panic(fmt.Errorf("failed to seek to post data start: %w", err))
+	}
+	content, err := io.ReadAll(p.data)
+	if err != nil {
+		panic(fmt.Errorf("failed to read post data: %w", err))
 	}
 	return string(content)
 }
 
-func (p Post) Filepath() string {
-	return p.filepath
+func (p Post) DataPath() (path string) {
+	if file, ok := p.data.(*os.File); ok {
+		path = file.Name()
+	}
+	return path
 }
 
 func (p Post) Language() string {
 	return p.language
 }
 
-func (p Post) Delete() {
-	os.Remove(p.filepath)
+func (p Post) SplitIntoThread(limit int, endmarker string) ([]*Post, error) {
+	t, err := splitPostIntoThread(p.Content(), limit, endmarker)
+	if err != nil {
+		return nil, err
+	}
+	thread := make([]*Post, 0, len(t))
+	for _, str := range t {
+		np, _ := NewPostString(p.language, str)
+		thread = append(thread, np)
+	}
+	return thread, nil
 }
 
 func splitPostIntoThread(post string, limit int, endmarker string) ([]string, error) {
