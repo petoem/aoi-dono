@@ -28,7 +28,7 @@ func mastodonPost(ctx context.Context, credentials Mastodon, post *Post) (string
 		characterlimit = defaultMastodonStatusCharacterLimit
 	}
 
-	thread, err := splitPostIntoThread(post.Content(), int(characterlimit), "...")
+	thread, err := post.SplitIntoThread(int(characterlimit), "...")
 	if err != nil {
 		return "", err
 	}
@@ -36,9 +36,9 @@ func mastodonPost(ctx context.Context, credentials Mastodon, post *Post) (string
 	toots := make([]*mastodon.Toot, 0, len(thread))
 	for _, p := range thread {
 		toots = append(toots, &mastodon.Toot{
-			Status:     p,
+			Status:     p.Content(),
 			Visibility: "public",
-			Language:   post.Language(),
+			Language:   p.Language(),
 		})
 	}
 

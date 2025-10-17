@@ -30,22 +30,22 @@ func blueskyPost(ctx context.Context, credentials Bluesky, post *Post) (string, 
 		return "", err
 	}
 
-	thread, err := splitPostIntoThread(post.Content(), 300, "...")
+	thread, err := post.SplitIntoThread(300, "...")
 	if err != nil {
 		return "", err
 	}
 
 	records := make([]*bsky.FeedPost, 0, len(thread))
 	for _, p := range thread {
-		facetsLink := findRichtextFacetLinks(p)
-		facetsTag := findRichtextFacetTags(p)
-		facetsMention := findRichtextFacetMention(ctx, c, p)
+		facetsLink := findRichtextFacetLinks(p.Content())
+		facetsTag := findRichtextFacetTags(p.Content())
+		facetsMention := findRichtextFacetMention(ctx, c, p.Content())
 
 		records = append(records, &bsky.FeedPost{
 			CreatedAt: string(syntax.DatetimeNow()),
-			Langs:     []string{post.Language()},
+			Langs:     []string{p.Language()},
 			Facets:    slices.Concat(facetsLink, facetsTag, facetsMention),
-			Text:      p,
+			Text:      p.Content(),
 		})
 	}
 
